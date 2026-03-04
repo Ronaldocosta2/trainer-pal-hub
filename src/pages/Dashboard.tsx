@@ -1,13 +1,13 @@
-import { useEffect, useMemo } from 'react';
-import { Users, AlertTriangle, CreditCard, DollarSign, CalendarClock } from 'lucide-react';
+import { useMemo } from 'react';
+import { Users, AlertTriangle, DollarSign, CalendarClock, MessageCircle } from 'lucide-react';
 import { KpiCard } from '@/components/KpiCard';
-import { StatusBadge } from '@/components/StatusBadge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAlunos } from '@/hooks/useAlunos';
 import { usePagamentos } from '@/hooks/usePagamentos';
 import { differenceInDays, parseISO, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { openWhatsApp, getCobrancaMessage } from '@/lib/whatsapp';
 
 export default function Dashboard() {
   const { data: alunos = [] } = useAlunos();
@@ -16,11 +16,11 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     const today = new Date();
     const alunosAtivos = alunos.filter(a => a.ativo);
-    
+
     const inadimplentes = pagamentos.filter(p => {
       const venc = parseISO(p.data_vencimento);
       return p.status !== 'pago' && venc < today;
-    });
+    }).sort((a, b) => differenceInDays(parseISO(a.data_vencimento), parseISO(b.data_vencimento)));
 
     const proximosVencimentos = pagamentos.filter(p => {
       const venc = parseISO(p.data_vencimento);
@@ -40,6 +40,14 @@ export default function Dashboard() {
 
     return { alunosAtivos: alunosAtivos.length, inadimplentes, proximosVencimentos, receitaMes };
   }, [alunos, pagamentos]);
+
+  const handleCobrarWhatsApp = (pagamento: any) => {
+    const nome = pagamento.alunos?.nome ?? 'Aluno';
+    const telefone = pagamento.alunos?.telefone ?? '';
+    const dias = differenceInDays(new Date(), parseISO(pagamento.data_vencimento));
+    const msg = getCobrancaMessage(nome, Number(pagamento.valor), dias);
+    openWhatsApp(telefone, msg);
+  };
 
   return (
     <div className="space-y-6">
@@ -76,16 +84,28 @@ export default function Dashboard() {
                   <TableRow>
                     <TableHead>Aluno</TableHead>
                     <TableHead>Valor</TableHead>
-                    <TableHead>Dias Atraso</TableHead>
+                    <TableHead>Atraso</TableHead>
+                    <TableHead className="text-right">Cobrar</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {stats.inadimplentes.slice(0, 5).map(p => (
+                  {stats.inadimplentes.slice(0, 10).map(p => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{(p as any).alunos?.nome ?? '—'}</TableCell>
                       <TableCell>R$ {Number(p.valor).toFixed(2)}</TableCell>
                       <TableCell className="text-destructive font-semibold">
                         {differenceInDays(new Date(), parseISO(p.data_vencimento))}d
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleCobrarWhatsApp(p)}
+                          title="Cobrar via WhatsApp"
+                          className="text-success hover:text-success"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
