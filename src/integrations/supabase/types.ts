@@ -14,7 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alunos: {
+        Row: {
+          ativo: boolean
+          contato_emergencia: string | null
+          created_at: string
+          data_inicio: string
+          data_nascimento: string | null
+          dia_vencimento: number
+          email: string
+          endereco: string | null
+          foto_url: string | null
+          id: string
+          nome: string
+          objetivo: string | null
+          observacoes: string | null
+          plano_id: string | null
+          telefone: string
+          updated_at: string
+          user_id: string
+          valor_mensalidade: number
+        }
+        Insert: {
+          ativo?: boolean
+          contato_emergencia?: string | null
+          created_at?: string
+          data_inicio?: string
+          data_nascimento?: string | null
+          dia_vencimento?: number
+          email: string
+          endereco?: string | null
+          foto_url?: string | null
+          id?: string
+          nome: string
+          objetivo?: string | null
+          observacoes?: string | null
+          plano_id?: string | null
+          telefone: string
+          updated_at?: string
+          user_id: string
+          valor_mensalidade?: number
+        }
+        Update: {
+          ativo?: boolean
+          contato_emergencia?: string | null
+          created_at?: string
+          data_inicio?: string
+          data_nascimento?: string | null
+          dia_vencimento?: number
+          email?: string
+          endereco?: string | null
+          foto_url?: string | null
+          id?: string
+          nome?: string
+          objetivo?: string | null
+          observacoes?: string | null
+          plano_id?: string | null
+          telefone?: string
+          updated_at?: string
+          user_id?: string
+          valor_mensalidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alunos_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          id: string
+          observacao: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          id?: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          id?: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          frequencia: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          frequencia?: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          frequencia?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
