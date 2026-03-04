@@ -1,15 +1,35 @@
+import { toast } from 'sonner';
+
 export function formatPhoneForWhatsApp(phone: string): string {
-  // Remove tudo que não é número
   const digits = phone.replace(/\D/g, '');
-  // Se já começa com 55, retorna. Senão adiciona 55
   if (digits.startsWith('55')) return digits;
   return `55${digits}`;
 }
 
-export function openWhatsApp(phone: string, message: string) {
+export function getWhatsAppUrl(phone: string, message: string): string {
   const formattedPhone = formatPhoneForWhatsApp(phone);
   const encodedMessage = encodeURIComponent(message);
-  window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, '_blank');
+  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+}
+
+export function openWhatsApp(phone: string, message: string) {
+  const url = getWhatsAppUrl(phone, message);
+  const win = window.open(url, '_blank');
+  
+  // If blocked by iframe/popup blocker, copy link to clipboard
+  if (!win || win.closed) {
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Link do WhatsApp copiado!', {
+        description: 'Cole no navegador para abrir a conversa.',
+      });
+    }).catch(() => {
+      // Fallback: show the URL in a toast
+      toast.info('Abra este link no navegador:', {
+        description: url,
+        duration: 10000,
+      });
+    });
+  }
 }
 
 export function getCobrancaMessage(nomeAluno: string, valor: number, diasAtraso: number): string {

@@ -4,11 +4,11 @@ import { usePlanos } from '@/hooks/usePlanos';
 import { useCreatePagamento } from '@/hooks/usePagamentos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, UserCheck, UserX, Pencil, MessageCircle } from 'lucide-react';
+import { Plus, Search, UserCheck, UserX, Pencil, MessageCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Aluno } from '@/types/database';
 import { AlunoForm, AlunoFormData } from '@/components/AlunoForm';
@@ -30,6 +30,9 @@ export default function Alunos() {
     a.nome.toLowerCase().includes(search.toLowerCase())
   );
 
+  const ativos = alunos.filter(a => a.ativo).length;
+  const inativos = alunos.length - ativos;
+
   const handleCreate = async (form: AlunoFormData) => {
     try {
       const aluno = await createAluno.mutateAsync({
@@ -49,7 +52,6 @@ export default function Alunos() {
         ativo: true,
       });
 
-      // Criar pagamento da 1ª mensalidade automaticamente
       if (aluno && Number(form.valor_mensalidade) > 0) {
         const today = new Date();
         const diaVenc = Number(form.dia_vencimento) || 10;
@@ -112,26 +114,62 @@ export default function Alunos() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Alunos</h1>
-          <p className="text-muted-foreground">{alunos.filter(a => a.ativo).length} ativos</p>
+          <p className="text-muted-foreground">Gerencie seus alunos e pagamentos</p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Novo Aluno</Button>
+            <Button size="lg" className="gap-2">
+              <Plus className="h-5 w-5" /> Novo Aluno
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Cadastrar Aluno</DialogTitle>
             </DialogHeader>
-            <AlunoForm
-              planos={planos}
-              onSubmit={handleCreate}
-              isLoading={createAluno.isPending}
-            />
+            <AlunoForm planos={planos} onSubmit={handleCreate} isLoading={createAluno.isPending} />
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Stats cards */}
+      <div className="grid gap-4 grid-cols-3">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{alunos.length}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+              <UserCheck className="h-5 w-5 text-success" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{ativos}</p>
+              <p className="text-xs text-muted-foreground">Ativos</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
+              <UserX className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{inativos}</p>
+              <p className="text-xs text-muted-foreground">Inativos</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Edit dialog */}
@@ -140,26 +178,17 @@ export default function Alunos() {
           <DialogHeader>
             <DialogTitle>Editar Aluno</DialogTitle>
           </DialogHeader>
-          <AlunoForm
-            planos={planos}
-            initialData={editingAluno}
-            onSubmit={handleEdit}
-            isLoading={updateAluno.isPending}
-            isEdit
-          />
+          <AlunoForm planos={planos} initialData={editingAluno} onSubmit={handleEdit} isLoading={updateAluno.isPending} isEdit />
         </DialogContent>
       </Dialog>
 
+      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar aluno por nome..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-10"
-        />
+        <Input placeholder="Buscar aluno por nome..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
+      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -180,11 +209,11 @@ export default function Alunos() {
                 <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum aluno encontrado</TableCell></TableRow>
               ) : (
                 filtered.map(aluno => (
-                  <TableRow key={aluno.id}>
+                  <TableRow key={aluno.id} className="group">
                     <TableCell className="font-medium">{aluno.nome}</TableCell>
-                    <TableCell className="hidden md:table-cell">{aluno.telefone}</TableCell>
+                    <TableCell className="hidden md:table-cell font-mono text-sm">{aluno.telefone}</TableCell>
                     <TableCell className="hidden lg:table-cell">{aluno.objetivo || '—'}</TableCell>
-                    <TableCell>R$ {Number(aluno.valor_mensalidade).toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">R$ {Number(aluno.valor_mensalidade).toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge variant={aluno.ativo ? 'default' : 'secondary'} className={aluno.ativo ? 'bg-success/15 text-success border-success/30' : ''}>
                         {aluno.ativo ? 'Ativo' : 'Inativo'}
