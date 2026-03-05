@@ -9,17 +9,22 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isSignUp) {
+      if (isResetPassword) {
+        await resetPassword(email);
+        toast({ title: 'Email enviado!', description: 'Verifique sua caixa de entrada para redefinir a senha.' });
+        setIsResetPassword(false);
+      } else if (isSignUp) {
         await signUp(email, password);
         toast({ title: 'Conta criada!', description: 'Verifique seu email para confirmar.' });
       } else {
@@ -41,7 +46,7 @@ export default function Login() {
           </div>
           <CardTitle className="text-2xl font-bold">FitControl</CardTitle>
           <CardDescription>
-            {isSignUp ? 'Crie sua conta de personal trainer' : 'Acesse sua conta'}
+            {isResetPassword ? 'Recupere seu acesso' : isSignUp ? 'Crie sua conta de personal trainer' : 'Acesse sua conta'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -57,30 +62,53 @@ export default function Login() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
+            {!isResetPassword && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Senha</Label>
+                  {!isSignUp && (
+                    <button
+                      type="button"
+                      onClick={() => setIsResetPassword(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Carregando...' : isSignUp ? 'Criar conta' : 'Entrar'}
+              {loading ? 'Processando...' : isResetPassword ? 'Enviar link' : isSignUp ? 'Criar conta' : 'Entrar'}
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
-            </button>
+          <div className="mt-4 flex flex-col items-center gap-2">
+            {isResetPassword ? (
+              <button
+                type="button"
+                onClick={() => setIsResetPassword(false)}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors hover:underline"
+              >
+                Voltar para o login
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors hover:underline"
+              >
+                {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>

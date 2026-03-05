@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Plus, Check, Search } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -22,12 +23,16 @@ export default function Pagamentos() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
+  const [filterFrequencia, setFilterFrequencia] = useState<string>('todos');
   const [form, setForm] = useState({ aluno_id: '', valor: '', data_vencimento: '', status: 'pendente' as const });
 
   const filtered = pagamentos.filter(p => {
     const matchesSearch = (p as any).alunos?.nome?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = filterStatus === 'todos' || p.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const frequenciaPlano = (p as any).alunos?.planos?.frequencia?.toLowerCase() || '';
+    const matchesFrequencia = filterFrequencia === 'todos' || frequenciaPlano === filterFrequencia;
+
+    return matchesSearch && matchesStatus && matchesFrequencia;
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,7 +77,7 @@ export default function Pagamentos() {
                 <Label>Aluno *</Label>
                 <Select value={form.aluno_id} onValueChange={v => {
                   const aluno = alunos.find(a => a.id === v);
-                  setForm({...form, aluno_id: v, valor: aluno ? String(aluno.valor_mensalidade) : form.valor });
+                  setForm({ ...form, aluno_id: v, valor: aluno ? String(aluno.valor_mensalidade) : form.valor });
                 }}>
                   <SelectTrigger><SelectValue placeholder="Selecione o aluno" /></SelectTrigger>
                   <SelectContent>
@@ -85,11 +90,11 @@ export default function Pagamentos() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Valor (R$) *</Label>
-                  <Input type="number" step="0.01" value={form.valor} onChange={e => setForm({...form, valor: e.target.value})} required />
+                  <Input type="number" step="0.01" value={form.valor} onChange={e => setForm({ ...form, valor: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
                   <Label>Vencimento *</Label>
-                  <Input type="date" value={form.data_vencimento} onChange={e => setForm({...form, data_vencimento: e.target.value})} required />
+                  <Input type="date" value={form.data_vencimento} onChange={e => setForm({ ...form, data_vencimento: e.target.value })} required />
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={createPagamento.isPending}>
@@ -100,60 +105,70 @@ export default function Pagamentos() {
         </Dialog>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por aluno..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="pago">Pago</SelectItem>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="atrasado">Atrasado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="flex flex-col gap-4">
+        <Tabs value={filterFrequencia} onValueChange={setFilterFrequencia} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 max-w-[400px]">
+            <TabsTrigger value="todos">Todos os Planos</TabsTrigger>
+            <TabsTrigger value="mensal">Mensais</TabsTrigger>
+            <TabsTrigger value="anual">Anuais</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Aluno</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum pagamento encontrado</TableCell></TableRow>
-              ) : (
-                filtered.map(pag => (
-                  <TableRow key={pag.id}>
-                    <TableCell className="font-medium">{(pag as any).alunos?.nome ?? '—'}</TableCell>
-                    <TableCell>{format(parseISO(pag.data_vencimento), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell>R$ {Number(pag.valor).toFixed(2)}</TableCell>
-                    <TableCell><StatusBadge status={pag.status} /></TableCell>
-                    <TableCell className="text-right">
-                      {pag.status !== 'pago' && (
-                        <Button variant="ghost" size="icon" onClick={() => marcarPago(pag.id)} title="Marcar como pago">
-                          <Check className="h-4 w-4 text-success" />
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Buscar por aluno..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+          </div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="pago">Pago</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="atrasado">Atrasado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Aluno</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                ) : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum pagamento encontrado</TableCell></TableRow>
+                ) : (
+                  filtered.map(pag => (
+                    <TableRow key={pag.id}>
+                      <TableCell className="font-medium">{(pag as any).alunos?.nome ?? '—'}</TableCell>
+                      <TableCell>{format(parseISO(pag.data_vencimento), 'dd/MM/yyyy')}</TableCell>
+                      <TableCell>R$ {Number(pag.valor).toFixed(2)}</TableCell>
+                      <TableCell><StatusBadge status={pag.status} /></TableCell>
+                      <TableCell className="text-right">
+                        {pag.status !== 'pago' && (
+                          <Button variant="ghost" size="icon" onClick={() => marcarPago(pag.id)} title="Marcar como pago">
+                            <Check className="h-4 w-4 text-success" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

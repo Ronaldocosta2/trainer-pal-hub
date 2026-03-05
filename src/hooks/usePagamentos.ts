@@ -8,7 +8,7 @@ export function usePagamentos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pagamentos')
-        .select('*, alunos(nome, telefone, email)')
+        .select('*, alunos(nome, telefone, email, planos(frequencia))')
         .order('data_vencimento', { ascending: false });
       if (error) throw error;
       return data as Pagamento[];

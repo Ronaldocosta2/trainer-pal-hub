@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import Planos from "./pages/Planos";
 import Pagamentos from "./pages/Pagamentos";
+import Galeria from "./pages/Galeria";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/alunos" element={<ProtectedRoute><Alunos /></ProtectedRoute>} />
             <Route path="/planos" element={<ProtectedRoute><Planos /></ProtectedRoute>} />
             <Route path="/pagamentos" element={<ProtectedRoute><Pagamentos /></ProtectedRoute>} />
+            <Route path="/galeria" element={<ProtectedRoute><Galeria /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

@@ -1,6 +1,5 @@
-import { LayoutDashboard, Users, CreditCard, ClipboardList, LogOut, Dumbbell } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, ClipboardList, Dumbbell, Images } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +16,7 @@ import {
 const menuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Alunos', url: '/alunos', icon: Users },
+  { title: 'Galeria do Aluno', url: '/galeria', icon: Images },
   { title: 'Planos', url: '/planos', icon: ClipboardList },
   { title: 'Pagamentos', url: '/pagamentos', icon: CreditCard },
 ];
@@ -24,7 +24,6 @@ const menuItems = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut } = useAuth();
 
   return (
     <Sidebar>
@@ -60,16 +59,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => signOut()}>
-              <LogOut className="h-4 w-4" />
-              <span>Sair</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }
