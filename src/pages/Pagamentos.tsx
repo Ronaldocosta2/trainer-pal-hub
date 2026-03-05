@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Plus, Check, Search } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Plus, Check, Search, MessageCircle } from 'lucide-react';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { openWhatsApp, getCobrancaMessage } from '@/lib/whatsapp';
 
 export default function Pagamentos() {
   const { data: pagamentos = [], isLoading } = usePagamentos();
@@ -55,6 +56,14 @@ export default function Pagamentos() {
   const marcarPago = async (id: string) => {
     await updatePagamento.mutateAsync({ id, status: 'pago', data_pagamento: new Date().toISOString().split('T')[0] });
     toast({ title: 'Pagamento confirmado!' });
+  };
+
+  const handleCobrarWhatsApp = (pagamento: any) => {
+    const nome = pagamento.alunos?.nome ?? 'Aluno';
+    const telefone = pagamento.alunos?.telefone ?? '';
+    const dias = differenceInDays(new Date(), parseISO(pagamento.data_vencimento));
+    const msg = getCobrancaMessage(nome, Number(pagamento.valor), dias);
+    openWhatsApp(telefone, msg);
   };
 
   return (
@@ -156,9 +165,14 @@ export default function Pagamentos() {
                       <TableCell><StatusBadge status={pag.status} /></TableCell>
                       <TableCell className="text-right">
                         {pag.status !== 'pago' && (
-                          <Button variant="ghost" size="icon" onClick={() => marcarPago(pag.id)} title="Marcar como pago">
-                            <Check className="h-4 w-4 text-success" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleCobrarWhatsApp(pag)} title="Cobrar via WhatsApp" className="text-primary hover:text-primary">
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => marcarPago(pag.id)} title="Marcar como pago">
+                              <Check className="h-4 w-4 text-success" />
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
